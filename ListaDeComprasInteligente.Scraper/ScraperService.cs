@@ -5,7 +5,7 @@ namespace ListaDeComprasInteligente.Scraper;
 
 public class ScraperService
 {
-    public async Task<string> ScrapAsync(ScrapRequest scrapRequest)
+    public async Task<ScrapResult> ScrapAsync(ScrapRequest scrapRequest)
     {
         await using var page = await Browser.OpenNewPageAsync();
         
@@ -13,7 +13,7 @@ public class ScraperService
         var html = await page.GetContentAsync();
         
         await page.CloseAsync();
-        
-        return html;
+
+        return new ScrapResult(html);
     }
 }

@@ -1,5 +1,3 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
 FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 EXPOSE 80
@@ -15,6 +13,9 @@ RUN dotnet restore "ListaDeComprasInteligente.API/ListaDeComprasInteligente.API.
 COPY . .
 WORKDIR "/src/ListaDeComprasInteligente.API"
 RUN dotnet build "ListaDeComprasInteligente.API.csproj" -c Release -o /app/build
+
+# RUN chmod +x ./chromium-config.sh && ./chromium-config.sh
+# ENV PUPPETEER_EXECUTABLE_PATH "/usr/bin/google-chrome"
 
 FROM build AS publish
 RUN dotnet publish "ListaDeComprasInteligente.API.csproj" -c Release -o /app/publish

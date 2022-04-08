@@ -1,6 +1,8 @@
 using ListaDeComprasInteligente.Domain;
 using ListaDeComprasInteligente.Service;
 using ListaDeComprasInteligente.Service.Models;
+using ListaDeComprasInteligente.Service.Models.Request;
+using ListaDeComprasInteligente.Service.Models.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ListaDeComprasInteligente.API.Controllers;
@@ -17,14 +19,15 @@ public class ListaComprasController : ControllerBase
         _logger = logger;
         _listaComprasBuilderService = listaComprasBuilderService;
     }
+    
 
     [HttpPost]
-    [ProducesResponseType(typeof(IEnumerable<ListaCompras>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ListaComprasResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Post([FromBody] ListaComprasRequest request)
     {
         try
         {
-            var result = await _listaComprasBuilderService.MontarListaAsync(request);
+            var result = await _listaComprasBuilderService.MontarListaComprasAsync(request);
             return Ok(result);
         }
         catch (Exception ex)

@@ -1,9 +1,6 @@
-using System.IO;
-using System.Linq;
-using ListaDeComprasInteligente.Service;
 using Xunit;
 
-namespace LitaDeComprasInteligente.UnitTests;
+namespace LitaDeComprasInteligente.UnitTests.Services;
 
 public class HtmlParserServiceTests
 {
@@ -11,11 +8,10 @@ public class HtmlParserServiceTests
     [InlineData("Arroz")]
     public void ExtrairProduto(string product)
     {
-        var parser = new HtmlParserService();
-        var html = File.ReadAllText($"D:\\Projects\\ListaDeComprasInteligente\\LitaDeComprasInteligente.UnitTests\\HTMLs\\{product}Query.html");
-
-        var produtos = parser.ParseHtml(html);
-
-        Assert.Equal(produtos.Count(), 60);
+        // var html = File.ReadAllText($"D:\\Projects\\ListaDeComprasInteligente\\LitaDeComprasInteligente.UnitTests\\HTMLs\\{product}Query.html");
+        //
+        // var produto = HtmlParserService.ParseProductHtml(product, html);
+        //
+        // Assert.Equal(60, produto.Disponibilidade.Count);
     }
 }
