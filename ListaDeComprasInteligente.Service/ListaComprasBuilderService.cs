@@ -1,20 +1,31 @@
-﻿using ListaDeComprasInteligente.Domain;
+﻿using System.Globalization;
+using ListaDeComprasInteligente.Domain;
 using ListaDeComprasInteligente.Scraper;
 using ListaDeComprasInteligente.Scraper.Models;
 using ListaDeComprasInteligente.Service.Extensions;
 using ListaDeComprasInteligente.Service.Models;
-using ListaDeComprasInteligente.Service.Models.Request;
-using ListaDeComprasInteligente.Service.Models.Response;
-using System.Globalization;
+using ListaDeComprasInteligente.Shared.Models.Request;
+using ListaDeComprasInteligente.Shared.Models.Response;
+using Microsoft.AspNetCore.Http;
 
 namespace ListaDeComprasInteligente.Service;
 
 public class ListaComprasBuilderService
 {
     private readonly ScraperService _scraperService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ListaComprasBuilderService(ScraperService scraperService) =>
+    public ListaComprasBuilderService(ScraperService scraperService)
+    {
         _scraperService = scraperService;
+    }
+
+    public ListaComprasBuilderService(ScraperService scraperService, IHttpContextAccessor httpContextAccessor)
+    {
+        _scraperService = scraperService;
+        _httpContextAccessor = httpContextAccessor;
+    }
+    
     
     
     public async Task<ListaComprasResponse> MontarListaComprasAsync(ListaComprasRequest listaComprasRequest)
@@ -35,7 +46,7 @@ public class ListaComprasBuilderService
 
     private Task<ScrapResult> ScrapProductAsync(ProdutoRequest produto)
     {
-        var scrapRequest = produto.ToScrapRequest();
+        var scrapRequest = produto.ToScrapRequest(_httpContextAccessor?.GetGeolocation());
         return _scraperService.ScrapAsync(scrapRequest);
     }
 
@@ -47,20 +58,16 @@ public class ListaComprasBuilderService
         for (var i = 0; i < htmlParseResult.Titulos.Length; i++)
         {
             var tituloAnuncio = htmlParseResult.Titulos[i];
-            var preco = htmlParseResult.Precos[i].Replace(',', '.');
+            var precoAnuncio = htmlParseResult.Precos[i].Replace(',', '.');
             var fornecedor = htmlParseResult.Fornecedores[i];
 
-            var anuncioValido = ValidarAnuncioProduto(produtoRequest, tituloAnuncio);
-            if (!anuncioValido)
-            {
-                continue;
-            }
-            if (!decimal.TryParse(preco, out var precoProduto))
-            {
-                continue;
-            }
+            var anuncioValido = ValidarAnuncioProduto(tituloAnuncio, produtoRequest);
+            if (!anuncioValido) continue;
+
+            var precoValido = decimal.TryParse(precoAnuncio, NumberStyles.Currency, CultureInfo.InvariantCulture, out var preco);
+            if (!precoValido) continue;
             
-            var disponibilidade = new Disponibilidade(tituloAnuncio, fornecedor, precoProduto);
+            var disponibilidade = new Disponibilidade(tituloAnuncio, fornecedor, preco);
             produto.AdicionarDisponibilidade(disponibilidade);
         }
         
@@ -68,33 +75,15 @@ public class ListaComprasBuilderService
     }
 
 
-    private static bool ValidarAnuncioProduto(ProdutoRequest produtoRequest, string anuncioProduto)
+    private static bool ValidarAnuncioProduto(string anuncioProduto, ProdutoRequest produtoRequest)
     {
-        var nomeValido = true;
         var palavrasChave = produtoRequest.Nome.Split(' ');
-        foreach (var palavra in palavrasChave)
-        {
-            nomeValido = anuncioProduto.Contains(palavra, StringComparison.InvariantCultureIgnoreCase);
-        }
+        var nomeValido = palavrasChave.All(palavra => anuncioProduto.Contains(palavra, StringComparison.InvariantCultureIgnoreCase));
         
-        var quantidadeValida = true;
-        if (produtoRequest.Quantidade is not null)
-        {
-            var quantidade = produtoRequest.Quantidade.ToString();
-            quantidadeValida = anuncioProduto.Contains(quantidade, StringComparison.InvariantCultureIgnoreCase)
-                            || anuncioProduto.Contains(quantidade.Replace(" ", string.Empty), StringComparison.InvariantCultureIgnoreCase);
-        }
+        var quantidade = produtoRequest.Quantidade.ToString();
+        var quantidadeValida = anuncioProduto.Contains(quantidade, StringComparison.InvariantCultureIgnoreCase)
+                                 || anuncioProduto.Contains(quantidade.Replace(" ", string.Empty), StringComparison.InvariantCultureIgnoreCase);
 
-        var detalhesValidos = true;
-        if (produtoRequest.Detalhes is not null)
-        {
-            var detalhes = produtoRequest.Detalhes.Split(' ');
-            foreach (var detalhe in detalhes)
-            {
-                detalhesValidos = anuncioProduto.Contains(detalhe, StringComparison.InvariantCultureIgnoreCase);
-            }
-        }
-        
-        return nomeValido && quantidadeValida && detalhesValidos;
+        return nomeValido && quantidadeValida;
     }
 }

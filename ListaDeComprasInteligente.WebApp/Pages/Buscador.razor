@@ -1,0 +1,185 @@
+﻿@page "/buscador"
+@using ListaDeComprasInteligente.Shared.Models.Request
+@using System.ComponentModel.DataAnnotations
+@using ListaDeComprasInteligente.Shared.Models.Response
+@using Newtonsoft.Json
+@using RestSharp
+
+<MudText Typo="Typo.h3" GutterBottom="true">Buscador de Preços</MudText>
+
+@if (ListaComprasResponse?.FornecedorMaisCompetitivo is null)
+{
+	@foreach (var produto in Model.Produtos)
+	{
+		<MudCard Class="mb-3">
+			<MudCardContent>
+				<EditForm Model="@produto">
+					<DataAnnotationsValidator/>
+
+					<MudTextField Label="Nome"
+									Immediate="true"
+									@bind-Value="produto.Nome"
+									For="(() => produto.Nome)"
+									AutoFocus="true"/>
+
+					<MudNumericField Label="Quantidade"
+										Immediate="true"
+										@bind-Value="produto.Quantidade"
+										For="(() => produto.Quantidade)"/>
+
+					<MudSelect T="UnidadeMedida"
+								Label="Unidade de Medida"
+								AnchorOrigin="Origin.BottomCenter"
+								Immediate="true">
+						@foreach(var unidade in UnidadesMedida)
+						{
+							<MudSelectItem T="UnidadeMedida" Value="@((UnidadeMedida)unidade)" />
+						}
+					</MudSelect>
+				</EditForm>
+			</MudCardContent>
+			<MudCardActions>
+				<MudButton Variant="Variant.Filled" Color="Color.Error" Class="ml-auto" OnClick="() => RemoveLastProduct(produto)">Remover</MudButton>
+			</MudCardActions>
+		</MudCard>
+	}
+
+	<MudContainer Class="mt-3 px-0 d-flex justify-space-between">
+		<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync">Buscar</MudButton>
+		<MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AddProduct">Adicionar</MudButton>
+	</MudContainer>
+}
+else
+{
+	<MudContainer Class="mt-16">
+        @*<MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">Resultado</MudText>*@
+        @*<MudText Align="Align.Center">Some long pricing text should go here maybe? who knows what text you would want here, i guess i cant fill it in for you.</MudText>*@
+        <MudGrid Class="mt-8">
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="25" Class="rounded-lg pb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5" Align="Align.Center">@ListaComprasResponse.FornecedorMaisCompetitivo.Nome</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex justify-center">
+                            <MudText Typo="Typo.h3">R$ @ListaComprasResponse.FornecedorMaisCompetitivo.PrecoTotal</MudText>
+                            @*<MudText Typo="Typo.h5" Class="ml-1 mt-5" Color="Color.Secondary">/Monthly</MudText>*@
+                        </div>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Style="width:50%;">Ver Produtos</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="25" Class="rounded-lg pb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5" Align="Align.Center">@ListaComprasResponse.Fornecedores.First().Nome</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex justify-center">
+                            <MudText Typo="Typo.h3">R$ @ListaComprasResponse.Fornecedores.First().PrecoTotal</MudText>
+                            @*<MudText Typo="Typo.h5" Class="ml-1 mt-5" Color="Color.Secondary">/Monthly</MudText>*@
+                        </div>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Style="width:50%;">Ver Produtos</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="4">
+                <MudCard Elevation="25" Class="rounded-lg pb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5" Align="Align.Center">@ListaComprasResponse.Fornecedores.Last().Nome</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex justify-center">
+                            <MudText Typo="Typo.h3">R$ @ListaComprasResponse.Fornecedores.Last().PrecoTotal</MudText>
+                            @*<MudText Typo="Typo.h5" Class="ml-1 mt-5" Color="Color.Secondary">/Monthly</MudText>*@
+                        </div>
+                    </MudCardContent>
+                    <MudCardActions Class="d-flex justify-center">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Style="width:50%;">Ver Produtos</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+    <MudContainer Class="mt-3 px-0 d-flex justify-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="CleanResults">Buscar Novamente</MudButton>
+	</MudContainer>
+}
+
+
+@code {
+	[Inject] ISnackbar Snackbar { get; set; }
+	[Inject] HttpClient HttpClient { get; set; }
+
+	ListaComprasRequest Model = new() { Produtos = new() };
+	Array UnidadesMedida = Enum.GetValues(typeof(UnidadeMedida));
+	ListaComprasResponse ListaComprasResponse;
+
+	protected override void OnInitialized()
+	{
+		var produtoDefault = new ProdutoRequest()
+		{
+			Nome = string.Empty,
+			Quantidade = 1,
+			UnidadeMedida = UnidadeMedida.Un
+		};
+		Model.Produtos.Add(produtoDefault);
+
+		base.OnInitialized();
+	}
+
+	private void AddProduct()
+	{
+		var newProduct = new ProdutoRequest
+		{
+			Nome = string.Empty,
+			Quantidade = 1,
+			UnidadeMedida = UnidadeMedida.Un
+		};
+		Model.Produtos.Add(newProduct);
+	}
+
+	private void RemoveLastProduct(ProdutoRequest produto) => Model.Produtos.Remove(produto);
+
+	private void CleanResults() => ListaComprasResponse = null;
+
+	private async Task SubmitAsync()
+	{
+		if (IsFormValid())
+		{
+			using var client = new RestClient(HttpClient, new RestClientOptions { BaseUrl = new Uri("http://localhost:5223") });
+			var request = new RestRequest("ListaCompras", Method.Post);
+			request.AddJsonBody(Model);
+			var response = await client.ExecuteAsync<ListaComprasResponse>(request);
+			ListaComprasResponse = response.Data ?? JsonConvert.DeserializeObject<ListaComprasResponse>(response.Content);
+
+			Snackbar.Add("Sucesso!", Severity.Success);
+			return;
+		}
+
+		Snackbar.Add("Formulário inválido", Severity.Error);
+	}
+
+	private bool IsFormValid()
+	{
+		var isValidForm = Model.Produtos.All(p =>
+		{
+			var validationContext = new ValidationContext(p);
+			ICollection<ValidationResult> results = new List<ValidationResult>();
+			var isValidModel = Validator.TryValidateObject(p, validationContext, results, true);
+			return isValidModel;
+		});
+		return isValidForm;
+	}
+}

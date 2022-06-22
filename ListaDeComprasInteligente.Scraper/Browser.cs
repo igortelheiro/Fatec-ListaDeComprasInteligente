@@ -19,12 +19,18 @@ public static class Browser
 
     private static async Task InitializeBrowserAsync()
     {
-        // await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
-        // _puppeteerBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
-        // {
-        //     Headless = true,
-        //     Args = new[] { "--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox", "--disable-setuid-sandbox" }
-        // });
-        _puppeteerBrowser = await Puppeteer.ConnectAsync(new ConnectOptions { BrowserWSEndpoint = "ws://chrome:3000" });
+        try
+        {
+            _puppeteerBrowser = await Puppeteer.ConnectAsync(new ConnectOptions { BrowserWSEndpoint = "ws://chrome:3000" });
+        }
+        catch
+        {
+            await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
+            _puppeteerBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
+            {
+                Headless = true,
+                Args = new[] { "--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox", "--disable-setuid-sandbox" }
+            });
+        }
     }
 }

@@ -1,12 +1,16 @@
-﻿using ListaDeComprasInteligente.Service.Extensions;
+﻿using ListaDeComprasInteligente.Shared.Extensions;
 
-namespace ListaDeComprasInteligente.Service.Models.Response;
+namespace ListaDeComprasInteligente.Shared.Models.Response;
 
 public class FornecedorResponse
 {
-    public string Nome { get; }
-    public List<ProdutoResponse> Produtos { get; }
-    public string PrecoTotal { get; private set; }
+    public string Nome { get; set; }
+    public List<ProdutoResponse> Produtos { get; set; }
+    public string PrecoTotal { get; set; }
+
+    public FornecedorResponse()
+    {
+    }
     
     public FornecedorResponse(string nome)
     {
