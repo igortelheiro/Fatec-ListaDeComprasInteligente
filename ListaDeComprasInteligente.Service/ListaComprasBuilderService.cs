@@ -15,17 +15,11 @@ public class ListaComprasBuilderService
     private readonly ScraperService _scraperService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ListaComprasBuilderService(ScraperService scraperService)
-    {
-        _scraperService = scraperService;
-    }
-
     public ListaComprasBuilderService(ScraperService scraperService, IHttpContextAccessor httpContextAccessor)
     {
         _scraperService = scraperService;
         _httpContextAccessor = httpContextAccessor;
     }
-    
     
     
     public async Task<ListaComprasResponse> MontarListaComprasAsync(ListaComprasRequest listaComprasRequest)
@@ -46,11 +40,12 @@ public class ListaComprasBuilderService
 
     private Task<ScrapResult> ScrapProductAsync(ProdutoRequest produto)
     {
-        var scrapRequest = produto.ToScrapRequest(_httpContextAccessor?.GetGeolocation());
+        var scrapRequest = produto.ToScrapRequest(_httpContextAccessor.GetGeolocation());
         return _scraperService.ScrapAsync(scrapRequest);
     }
 
 
+    // TODO: levar lógica pra dentro do Domain Produto
     private static Produto BuildProduto(ProdutoRequest produtoRequest, HtmlParseResult htmlParseResult)
     {
         var produto = new Produto(produtoRequest.Nome);
@@ -75,15 +70,12 @@ public class ListaComprasBuilderService
     }
 
 
+    // TODO: levar lógica pra dentro do Domain Produto
     private static bool ValidarAnuncioProduto(string anuncioProduto, ProdutoRequest produtoRequest)
     {
-        var palavrasChave = produtoRequest.Nome.Split(' ');
-        var nomeValido = palavrasChave.All(palavra => anuncioProduto.Contains(palavra, StringComparison.InvariantCultureIgnoreCase));
-        
-        var quantidade = produtoRequest.Quantidade.ToString();
-        var quantidadeValida = anuncioProduto.Contains(quantidade, StringComparison.InvariantCultureIgnoreCase)
-                                 || anuncioProduto.Contains(quantidade.Replace(" ", string.Empty), StringComparison.InvariantCultureIgnoreCase);
+        var palavrasChave = produtoRequest.ToString().Split(' ');
+        var anuncioValido = palavrasChave.All(palavra => anuncioProduto.Contains(palavra, StringComparison.InvariantCultureIgnoreCase));
 
-        return nomeValido && quantidadeValida;
+        return anuncioValido;
     }
 }

@@ -18,12 +18,10 @@ public static class RequestExtensions
     {
         const string baseUrl = "https://www.google.com/search?tbm=shop&q=";
         
-        var encodedName = EncodeToGoogleQuery(produtoRequest.Nome);
-        var encodedQuantity = EncodeToGoogleQuery(produtoRequest.Quantidade.ToString());
+        var encodedName = EncodeToGoogleQuery(produtoRequest.ToString());
         
         var stringBuilder = new StringBuilder(baseUrl);
         stringBuilder.Append(encodedName);
-        stringBuilder.Append(encodedQuantity);
         
         return stringBuilder.ToString();
     }
