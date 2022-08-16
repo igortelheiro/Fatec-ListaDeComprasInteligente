@@ -64,7 +64,7 @@ else
                     </MudCardHeader>
                     <MudCardContent>
                         <div class="d-flex justify-center">
-                            <MudText Typo="Typo.h3">R$ @ListaComprasResponse.FornecedorMaisCompetitivo.PrecoTotal</MudText>
+                            <MudText Typo="Typo.h3">@ListaComprasResponse.FornecedorMaisCompetitivo.PrecoTotal</MudText>
                             @*<MudText Typo="Typo.h5" Class="ml-1 mt-5" Color="Color.Secondary">/Monthly</MudText>*@
                         </div>
                     </MudCardContent>
@@ -82,7 +82,7 @@ else
                     </MudCardHeader>
                     <MudCardContent>
                         <div class="d-flex justify-center">
-                            <MudText Typo="Typo.h3">R$ @ListaComprasResponse.Fornecedores.First().PrecoTotal</MudText>
+                            <MudText Typo="Typo.h3">@ListaComprasResponse.Fornecedores.First().PrecoTotal</MudText>
                             @*<MudText Typo="Typo.h5" Class="ml-1 mt-5" Color="Color.Secondary">/Monthly</MudText>*@
                         </div>
                     </MudCardContent>
@@ -100,7 +100,7 @@ else
                     </MudCardHeader>
                     <MudCardContent>
                         <div class="d-flex justify-center">
-                            <MudText Typo="Typo.h3">R$ @ListaComprasResponse.Fornecedores.Last().PrecoTotal</MudText>
+                            <MudText Typo="Typo.h3">@ListaComprasResponse.Fornecedores.Last().PrecoTotal</MudText>
                             @*<MudText Typo="Typo.h5" Class="ml-1 mt-5" Color="Color.Secondary">/Monthly</MudText>*@
                         </div>
                     </MudCardContent>

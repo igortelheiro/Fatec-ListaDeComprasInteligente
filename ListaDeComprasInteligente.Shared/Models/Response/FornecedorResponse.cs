@@ -16,7 +16,7 @@ public class FornecedorResponse
     {
         Nome = nome ?? throw new ArgumentNullException(nameof(nome));
         Produtos = new List<ProdutoResponse>();
-        // PrecoTotal = $"R$ {CalcTotalPrice(produtos):0.00}";
+        PrecoTotal = ((decimal)0).ToVisualPrice();
     }
 
 
