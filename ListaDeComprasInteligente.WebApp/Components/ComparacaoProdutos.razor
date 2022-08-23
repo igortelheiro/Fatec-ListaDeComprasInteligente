@@ -1,0 +1,11 @@
+﻿<MudButton	Variant="Variant.Filled"
+			Color="Color.Warning"
+			Class="ml-auto"
+			OnClick=@CloseComparison>Voltar</MudButton>
+
+
+@code {
+    [Parameter] public EventCallback OnCloseComparison { get; set; }
+
+	protected Task CloseComparison() => OnCloseComparison.InvokeAsync();
+}

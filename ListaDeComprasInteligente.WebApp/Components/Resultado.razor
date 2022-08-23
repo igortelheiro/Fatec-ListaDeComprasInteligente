@@ -1,0 +1,26 @@
+﻿@inherits ResultadoBase
+
+
+<MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">Lista de Compras</MudText>
+
+<MudContainer Class="pa-8">
+    <MudGrid>
+        <CardFornecedor Nome=@ListaComprasResponse.FornecedorMaisCompetitivo.Nome
+                        PrecoTotal=@ListaComprasResponse.FornecedorMaisCompetitivo.PrecoTotal
+                        Produtos=@ListaComprasResponse.FornecedorMaisCompetitivo.Produtos />
+
+        <CardFornecedor Nome=@ListaComprasResponse.Fornecedores.First().Nome
+                        PrecoTotal=@ListaComprasResponse.Fornecedores.First().PrecoTotal
+                        Produtos=@ListaComprasResponse.Fornecedores.First().Produtos />
+
+        <CardFornecedor Nome=@ListaComprasResponse.Fornecedores.Last().Nome
+                        PrecoTotal=@ListaComprasResponse.Fornecedores.Last().PrecoTotal
+                        Produtos=@ListaComprasResponse.Fornecedores.Last().Produtos />
+    </MudGrid>
+</MudContainer>
+
+<MudContainer Class="mt-3 px-0 d-flex justify-center">
+    <MudButton  Variant="Variant.Filled"
+                Color="Color.Warning"
+                OnClick=@CloseResult>Voltar</MudButton>
+</MudContainer>

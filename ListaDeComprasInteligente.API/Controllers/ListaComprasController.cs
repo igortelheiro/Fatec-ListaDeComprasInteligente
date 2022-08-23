@@ -1,6 +1,4 @@
-using ListaDeComprasInteligente.Domain;
 using ListaDeComprasInteligente.Service;
-using ListaDeComprasInteligente.Service.Models;
 using ListaDeComprasInteligente.Shared.Models.Request;
 using ListaDeComprasInteligente.Shared.Models.Response;
 using Microsoft.AspNetCore.Mvc;

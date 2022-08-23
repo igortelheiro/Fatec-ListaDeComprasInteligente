@@ -1,0 +1,38 @@
+﻿@using ListaDeComprasInteligente.Shared.Models.Response
+
+
+<MudItem xs="12" sm="6" md="4">
+    <MudCard Elevation="25" Class="rounded-lg pb-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Align="Align.Center">@Nome</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <div class="d-flex justify-center">
+                <MudText Typo="Typo.h3">@PrecoTotal</MudText>
+            </div>
+        </MudCardContent>
+
+        <MudExpansionPanels Elevation="0">
+            <MudExpansionPanel IsInitiallyExpanded="true" Text="Produtos" MaxHeight="500" HideIcon="true">
+                <MudList>
+                    @foreach (var produto in Produtos)
+                    {
+                        <MudListItem>
+                            <span>@produto.Quantidade @produto.Nome</span>
+                            <span class="ml-auto">@produto.PrecoUnitario.ToString("C2")</span>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudCard>
+</MudItem>
+
+
+@code {
+    [Parameter] public string Nome { get; set; }
+    [Parameter] public string PrecoTotal { get; set; }
+    [Parameter] public IEnumerable<ProdutoResponse> Produtos { get; set; }
+}

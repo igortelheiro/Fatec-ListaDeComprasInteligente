@@ -9,6 +9,7 @@ public class ListaCompras
         Produtos = new List<Produto>();
     }
 
-    
+
+    // TODO: tirar média dos valores e excluir grandes disparidades
     public void AdicionarProduto(Produto produto) => Produtos.Add(produto);
 }

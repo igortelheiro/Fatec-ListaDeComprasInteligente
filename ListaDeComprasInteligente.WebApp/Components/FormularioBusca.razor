@@ -1,0 +1,60 @@
+﻿@inherits FormularioBuscaBase
+@using ListaDeComprasInteligente.Shared.Models.Request
+
+
+<MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">Buscador de Preços</MudText>
+
+@foreach (var produto in Model.Produtos)
+{
+	<MudCard Class="pa-3">
+		<MudCardContent>
+			<EditForm Model=@produto>
+				<DataAnnotationsValidator />
+
+				<MudTextField	Label="Nome do Produto"
+								Immediate="true"
+								AutoFocus="true"
+								@bind-Value="produto.Nome"
+								For=@(() => produto.Nome) />
+
+				<MudNumericField	Label="Quantidade"
+									Immediate="true"
+								    @bind-Value="produto.Quantidade"
+									For=@(() => produto.Quantidade) />
+
+				<MudSelect	T="UnidadeMedida"
+							Label="Unidade de Medida"
+							Immediate="true">
+					@foreach(var unidade in UnidadesMedida)
+					{
+						<MudSelectItem T=UnidadeMedida Value="(UnidadeMedida)unidade" />
+					}
+				</MudSelect>
+			</EditForm>
+		</MudCardContent>
+
+		<MudCardActions>
+			<MudButton	Variant="Variant.Filled"
+						Color="Color.Error"
+						Class="ml-auto"
+						StartIcon=@Icons.Material.Filled.Delete
+						OnClick=@(_ => RemoveLastProduct(produto))>Remover</MudButton>
+		</MudCardActions>
+	</MudCard>
+}
+
+<MudContainer Class="mt-4 px-0 d-flex flex-column flex-grow-1 gap-4">
+	<MudButton	Color="Color.Success"
+				Variant="Variant.Filled"
+				StartIcon=@Icons.Filled.AddCircle
+				OnClick=@AddProduct>Adicionar</MudButton>
+
+	<MudButton	Color="Color.Primary"
+				Variant="Variant.Filled"
+				StartIcon=@Icons.Filled.Search
+				OnClick=@Submit>Buscar</MudButton>
+</MudContainer>
+
+<MudScrollToTop>
+    <MudFab Color="Color.Primary" Icon=@Icons.Filled.ArrowCircleUp />
+</MudScrollToTop>
