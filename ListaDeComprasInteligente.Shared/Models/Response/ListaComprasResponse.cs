@@ -5,58 +5,58 @@ namespace ListaDeComprasInteligente.Shared.Models.Response;
 
 public class ListaComprasResponse
 {
-    public List<FornecedorResponse> Fornecedores { get; set; }
+    public IEnumerable<FornecedorResponse> Fornecedores { get; set; }
     public FornecedorResponse FornecedorMaisCompetitivo { get; set; }
+
+    private static readonly string[] _mercadosPrioritarios = new[] { "Carrefour", "Clube Extra", "Pão de Açúcar" };
 
     public ListaComprasResponse()
     {
     }
-    
+
+
     public ListaComprasResponse(ListaCompras listaCompras, ListaComprasRequest request)
     {
-        Fornecedores = new List<FornecedorResponse>();
-
-        var mercadosPrioritarios = new[] { "Carrefour", "Clube Extra", "Pão de Açúcar" };
+        Fornecedores = Array.Empty<FornecedorResponse>();
+        FornecedorMaisCompetitivo = new(); 
         
         foreach (var produto in listaCompras.Produtos)
         {
-            var disponibilidade = produto.Disponibilidade?.DistinctBy(d => d.NomeFornecedor)?.Select(d => d)?.ToList();
-            if (disponibilidade?.Count is 0)
+            var anuncios = produto.Value?.DistinctBy(d => d.NomeFornecedor)?.ToList();
+            if (anuncios?.Count is 0)
             {
                 return;
             }
             
-            var top3Disponibilidades = new List<Disponibilidade>();
+            var top3Anuncios = new List<Anuncio>();
             for (var i = 0; i < 3; i++)
             {
-                var melhorOpcao = disponibilidade?.FirstOrDefault(d => mercadosPrioritarios.Contains(d.NomeFornecedor, StringComparer.InvariantCultureIgnoreCase))
-                                  ?? disponibilidade?.MinBy(d => d.Preco);
+                var melhorAnuncio = anuncios!.FirstOrDefault(a => _mercadosPrioritarios.Contains(a.NomeFornecedor, StringComparer.InvariantCultureIgnoreCase))
+                                 ?? anuncios!.MinBy(d => d.Preco);
 
-                if (melhorOpcao is null) continue;
+                if (melhorAnuncio is null) continue;
                 
-                top3Disponibilidades.Add(melhorOpcao);
-                disponibilidade?.Remove(melhorOpcao);
+                top3Anuncios.Add(melhorAnuncio);
+                anuncios!.Remove(melhorAnuncio);
             }
             
-            foreach (var fornecedor in top3Disponibilidades)
+            foreach (var anuncio in top3Anuncios)
             {
-                if (fornecedor is null) continue;
-                
-                var produtoRequest = request.Produtos.First(p => p.Nome == produto.Nome);
+                var produtoRequest = request.Produtos.First(p => p.Nome == produto.Key);
                 if (produtoRequest is null) continue;
                 
-                var produtoResponse = new ProdutoResponse(fornecedor.TituloAnuncio, produtoRequest.Quantidade, fornecedor.Preco);
+                var produtoResponse = new ProdutoResponse(anuncio.Titulo, produtoRequest.Quantidade, anuncio.Preco);
                 
-                var fornecedorExistente = Fornecedores.FirstOrDefault(f => f.Nome == fornecedor.NomeFornecedor);
+                var fornecedorExistente = Fornecedores.FirstOrDefault(f => f.Nome == anuncio.NomeFornecedor);
                 if (fornecedorExistente is not null)
                 {
                     fornecedorExistente.AdicionarProduto(produtoResponse);
                     continue;
                 }
                 
-                var newFornecedor = new FornecedorResponse(fornecedor.NomeFornecedor);
+                var newFornecedor = new FornecedorResponse(anuncio.NomeFornecedor);
                 newFornecedor.AdicionarProduto(produtoResponse);
-                Fornecedores.Add(newFornecedor);
+                Fornecedores = Fornecedores.Concat(new FornecedorResponse[] { newFornecedor });
             }
         }
 
@@ -64,16 +64,15 @@ public class ListaComprasResponse
     }
 
 
-    // TODO: melhorar lógica e favorecer fornecedores com todos os produtos
     private void EncontrarFornecedorMaisCompetitivo(ListaComprasRequest request)
     {
-        var quantidadeProdutosRequest = request.Produtos.Count;
-        var fornecedoresCompletos = Fornecedores.FindAll(f => f.Produtos.Count == quantidadeProdutosRequest);
+        var fornecedoresCompletos = Fornecedores.ToList()
+                                                .FindAll(f => f.Produtos.Count() == request.Produtos.Count());
         
         FornecedorMaisCompetitivo = fornecedoresCompletos.Any()
-                                  ? fornecedoresCompletos.MinBy(f => f.PrecoTotal)
-                                  : Fornecedores.MinBy(f => f.PrecoTotal);
+                                    ? fornecedoresCompletos.MinBy(f => f.PrecoTotal)!
+                                    : Fornecedores.MinBy(f => f.PrecoTotal)!;
         
-        Fornecedores.Remove(FornecedorMaisCompetitivo);
+        Fornecedores = Fornecedores.Where(f => f != FornecedorMaisCompetitivo);
     }
 }

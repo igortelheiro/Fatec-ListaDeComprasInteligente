@@ -30,8 +30,10 @@ public class ListaComprasBuilderService
         {
             var scrapResult = await ScrapProductAsync(request);
             var htmlParseResult = HtmlParser.ParseHtml(scrapResult.Html);
-            var produto = BuildProduto(request, htmlParseResult);
-            listaDeCompras.AdicionarProduto(produto);
+            var anuncios = ExtrairAnuncios(request, htmlParseResult);
+
+            listaDeCompras.AdicionarProduto(request.Nome);
+            anuncios.ForEach(a => listaDeCompras.AdicionarAnuncio(request.Nome, a));
         });
 
         return new ListaComprasResponse(listaDeCompras, listaComprasRequest);;
@@ -46,10 +48,10 @@ public class ListaComprasBuilderService
 
 
     // TODO: levar lógica pra dentro do Domain Produto
-    private static Produto BuildProduto(ProdutoRequest produtoRequest, HtmlParseResult htmlParseResult)
+    private static List<Anuncio> ExtrairAnuncios(ProdutoRequest produtoRequest, HtmlParseResult htmlParseResult)
     {
-        var produto = new Produto(produtoRequest.Nome);
-        
+        var anuncios = new List<Anuncio>();
+
         for (var i = 0; i < htmlParseResult.Titulos.Length; i++)
         {
             var tituloAnuncio = htmlParseResult.Titulos[i];
@@ -62,11 +64,11 @@ public class ListaComprasBuilderService
             var precoValido = decimal.TryParse(precoAnuncio, NumberStyles.Currency, CultureInfo.InvariantCulture, out var preco);
             if (!precoValido) continue;
             
-            var disponibilidade = new Disponibilidade(tituloAnuncio, fornecedor, preco);
-            produto.AdicionarDisponibilidade(disponibilidade);
+            var anuncio = new Anuncio(tituloAnuncio, fornecedor, preco);
+            anuncios.Add(anuncio);
         }
         
-        return produto;
+        return anuncios;
     }
 
 

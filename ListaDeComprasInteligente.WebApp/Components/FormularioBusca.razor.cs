@@ -10,7 +10,7 @@ public partial class FormularioBuscaBase : ComponentBase
     [Parameter] public EventCallback<ListaComprasRequest> OnValidSubmit { get; set; }
     [Inject] private ISnackbar Snackbar { get; set; }
 
-	protected ListaComprasRequest Model = new() { Produtos = new() };
+	protected ListaComprasRequest Model = new() { Produtos = Array.Empty<ProdutoRequest>() };
     protected Array UnidadesMedida = Enum.GetValues(typeof(UnidadeMedida));
 
 	protected override void OnInitialized()
@@ -20,9 +20,11 @@ public partial class FormularioBuscaBase : ComponentBase
 	}
 
 
-	protected void AddProduct() => Model.Produtos.Add(BuildDefaultProduct());
+	protected void AddProduct() =>
+		Model.Produtos = Model.Produtos.ToList().Prepend(BuildDefaultProduct());
 
-	protected void RemoveLastProduct(ProdutoRequest produto) => Model.Produtos.Remove(produto);
+	protected void RemoveLastProduct(ProdutoRequest produto) =>
+		Model.Produtos = Model.Produtos.Where(p => p != produto);
 
 
 	protected void Submit()

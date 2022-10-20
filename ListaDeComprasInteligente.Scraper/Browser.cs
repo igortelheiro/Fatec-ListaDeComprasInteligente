@@ -13,7 +13,7 @@ public static class Browser
         {
             await InitializeBrowserAsync();
         }
-        return await _puppeteerBrowser.NewPageAsync();
+        return await _puppeteerBrowser!.NewPageAsync();
     }
     
 
@@ -21,16 +21,25 @@ public static class Browser
     {
         try
         {
-            _puppeteerBrowser = await Puppeteer.ConnectAsync(new ConnectOptions { BrowserWSEndpoint = "ws://chrome:3000" });
+            _puppeteerBrowser = await Puppeteer.ConnectAsync(
+                new ConnectOptions { BrowserWSEndpoint = "ws://chrome:3000" });
         }
         catch
         {
-            await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
-            _puppeteerBrowser = await Puppeteer.LaunchAsync(new LaunchOptions
+            await DownloadAndLaunchBrowserAsync();
+        }
+    }
+
+
+    private static async Task DownloadAndLaunchBrowserAsync()
+    {
+        var revision = await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
+        _puppeteerBrowser = await Puppeteer.LaunchAsync(
+            new LaunchOptions
             {
                 Headless = true,
+                ExecutablePath = revision.ExecutablePath,
                 Args = new[] { "--disable-gpu", "--disable-dev-shm-usage", "--no-sandbox", "--disable-setuid-sandbox" }
             });
-        }
     }
 }

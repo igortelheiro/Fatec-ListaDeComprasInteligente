@@ -5,7 +5,7 @@ namespace ListaDeComprasInteligente.Shared.Models.Response;
 public class FornecedorResponse
 {
     public string Nome { get; set; }
-    public List<ProdutoResponse> Produtos { get; set; }
+    public IEnumerable<ProdutoResponse> Produtos { get; set; }
     public string PrecoTotal { get; set; }
 
     public FornecedorResponse()
@@ -15,20 +15,20 @@ public class FornecedorResponse
     public FornecedorResponse(string nome)
     {
         Nome = nome ?? throw new ArgumentNullException(nameof(nome));
-        Produtos = new List<ProdutoResponse>();
-        PrecoTotal = ((decimal)0).ToVisualPrice();
+        Produtos = Array.Empty<ProdutoResponse>();
+        PrecoTotal = 0m.ToVisualPrice();
     }
 
 
     public void AdicionarProduto(ProdutoResponse produto)
     {
-        Produtos.Add(produto);
+        Produtos = Produtos.Concat(new ProdutoResponse[] { produto });
         PrecoTotal = CalcTotalPrice().ToVisualPrice();
     }
 
 
     private decimal CalcTotalPrice() =>
-        Produtos.Aggregate((decimal)0,
+        Produtos.Aggregate(0m,
             (total, produto) =>
             {
                 total += produto.PrecoUnitario * produto.Quantidade;

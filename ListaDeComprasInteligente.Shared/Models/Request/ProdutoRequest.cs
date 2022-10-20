@@ -27,20 +27,6 @@ public class ProdutoRequest
         }
         return $"{Nome} {Quantidade} {UnidadeMedida}";
     }
-
-
-    //private static string UnidadeMedidaToString(UnidadeMedida unidadeMedida) =>
-    //    unidadeMedida switch
-    //    {
-    //        UnidadeMedida.Unidade => string.Empty,
-    //        UnidadeMedida.Grama => "g",
-    //        UnidadeMedida.Miligrama => "mg",
-    //        UnidadeMedida.Kilograma => "Kg",
-    //        UnidadeMedida.Mililitro => "ml",
-    //        UnidadeMedida.Litro => "L",
-    //        UnidadeMedida.Metro => "m",
-    //        _ => throw new ArgumentOutOfRangeException(nameof(unidadeMedida), unidadeMedida, null)
-    //    };
 }
 
 public enum UnidadeMedida

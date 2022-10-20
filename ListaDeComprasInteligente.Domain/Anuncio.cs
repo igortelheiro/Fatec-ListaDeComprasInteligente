@@ -1,14 +1,14 @@
 ﻿namespace ListaDeComprasInteligente.Domain;
 
-public class Disponibilidade
+public class Anuncio
 {
-    public string TituloAnuncio { get; }
+    public string Titulo { get; }
     public string NomeFornecedor { get; }
     public decimal Preco { get; }
 
-    public Disponibilidade(string tituloAnuncio, string nomeFornecedor, decimal preco)
+    public Anuncio(string tituloAnuncio, string nomeFornecedor, decimal preco)
     {
-        TituloAnuncio = tituloAnuncio;
+        Titulo = tituloAnuncio;
         NomeFornecedor = nomeFornecedor;
         Preco = preco;
     }
