@@ -17,9 +17,6 @@ COPY . .
 WORKDIR "/src/ListaDeComprasInteligente.API"
 RUN dotnet build "ListaDeComprasInteligente.API.csproj" -c Release -o /app/build
 
-RUN chmod +x ./chromium-config.sh && ./chromium-config.sh
-ENV PUPPETEER_EXECUTABLE_PATH "/usr/bin/google-chrome"
-
 FROM build AS publish
 RUN dotnet publish "ListaDeComprasInteligente.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
