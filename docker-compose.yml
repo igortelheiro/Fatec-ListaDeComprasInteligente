@@ -2,14 +2,22 @@ version: '3.4'
 
 services:
   listadecomprasinteligente.api:
+    container_name: listadecomprasinteligente.api
     image: ${DOCKER_REGISTRY-}listadecomprasinteligenteapi
+    ports:
+      - "80:80"
+      - "443:443"
     build:
       context: .
       dockerfile: ListaDeComprasInteligente.API/Dockerfile
     networks:
       - browser
+    depends_on:
+      - chrome
   chrome:
     image: browserless/chrome:latest
+    ports:
+      - "3000:3000"
     networks:
       - browser
 

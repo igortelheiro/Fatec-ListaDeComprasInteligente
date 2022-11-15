@@ -1,4 +1,4 @@
-﻿@using ListaDeComprasInteligente.Shared.Models.Response
+﻿@    using ListaDeComprasInteligente.Shared.Models.Response
 
 
 <MudItem xs="12" sm="6" md="4">
@@ -14,7 +14,7 @@
             </div>
         </MudCardContent>
 
-        <MudExpansionPanels Elevation="0">
+        @*<MudExpansionPanels Elevation="0">
             <MudExpansionPanel IsInitiallyExpanded="true" Text="Produtos" MaxHeight="500" HideIcon="true">
                 <MudList>
                     @foreach (var produto in Produtos)
@@ -26,7 +26,7 @@
                     }
                 </MudList>
             </MudExpansionPanel>
-        </MudExpansionPanels>
+        </MudExpansionPanels>*@
     </MudCard>
 </MudItem>
 
@@ -34,5 +34,5 @@
 @code {
     [Parameter] public string Nome { get; set; }
     [Parameter] public string PrecoTotal { get; set; }
-    [Parameter] public IEnumerable<ProdutoResponse> Produtos { get; set; }
+    [Parameter] public IEnumerable<Produto> Produtos { get; set; }
 }

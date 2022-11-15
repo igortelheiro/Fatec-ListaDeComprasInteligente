@@ -1,11 +1,3 @@
 ﻿namespace ListaDeComprasInteligente.Scraper.Models;
 
-public class ScrapResult
-{
-    public string Html { get; }
-
-    public ScrapResult(string html)
-    {
-        Html = html;
-    }
-}
+public readonly record struct ScrapResult(string[] Titulos, string[] Precos, string[] Fornecedores);

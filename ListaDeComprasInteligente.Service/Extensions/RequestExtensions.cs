@@ -7,26 +7,22 @@ namespace ListaDeComprasInteligente.Service.Extensions;
 
 public static class RequestExtensions
 {
-    private static readonly UrlEncoder UrlEncoder = UrlEncoder.Default;
-
-
     public static ScrapRequest ToScrapRequest(this ProdutoRequest produtoRequest, Geolocation? geolocation) =>
-        new (produtoRequest.Nome, produtoRequest.BuildUrl(), geolocation);
+        new (produtoRequest.BuildUri(), geolocation);
 
 
-    private static string BuildUrl(this ProdutoRequest produtoRequest)
+    private static Uri BuildUri(this ProdutoRequest produtoRequest)
     {
         const string baseUrl = "https://www.google.com/search?tbm=shop&q=";
-        
-        var encodedName = EncodeToGoogleQuery(produtoRequest.ToString());
-        
-        var stringBuilder = new StringBuilder(baseUrl);
-        stringBuilder.Append(encodedName);
-        
-        return stringBuilder.ToString();
+        var encodedProductSearch = produtoRequest.ToString().EncodeToGoogleQuery();
+
+        var stringBuilder = new StringBuilder(baseUrl)
+            .Append(encodedProductSearch);
+
+        return new Uri(stringBuilder.ToString());
     }
 
 
-    private static string EncodeToGoogleQuery(string query) =>
-        UrlEncoder.Encode(query).Replace("%20", "+");
+    private static string EncodeToGoogleQuery(this string query) =>
+        UrlEncoder.Default.Encode(query).Replace("%20", "+");
 }

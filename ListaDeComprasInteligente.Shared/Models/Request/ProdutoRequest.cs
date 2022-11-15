@@ -19,23 +19,16 @@ public class ProdutoRequest
     [JsonConverter(typeof(StringEnumConverter))]
     public UnidadeMedida UnidadeMedida { get; set; }
 
+    [StringLength(100)]
+    public string Descricao { get; set; }
+
+
     public override string ToString()
     {
         if (UnidadeMedida is UnidadeMedida.Un)
         {
-            return Nome;
+            return $"{Nome} {Descricao}";
         }
-        return $"{Nome} {Quantidade} {UnidadeMedida}";
+        return $"{Nome} {Descricao} {Quantidade} {UnidadeMedida}";
     }
-}
-
-public enum UnidadeMedida
-{
-    Un,
-    g,
-    mg,
-    Kg,
-    ml,
-    L,
-    m
 }

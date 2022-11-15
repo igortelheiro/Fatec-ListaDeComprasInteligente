@@ -1,50 +1,95 @@
-﻿using ListaDeComprasInteligente.Domain.Exceptions;
+﻿using ListaDeComprasInteligente.Domain.ValueObjects;
+using ListaDeComprasInteligente.Shared.Models.Request;
+using ListaDeComprasInteligente.Shared.Models.Response;
+using Serilog;
 
 namespace ListaDeComprasInteligente.Domain;
 
 public class ListaCompras
 {
-    public IDictionary<string, IEnumerable<Anuncio>> Produtos { get; }
+    public ListaComprasRequest ParametrosBusca { get; }
+    public IDictionary<string, List<Anuncio>> Produtos { get; }
+    public IEnumerable<Fornecedor> Fornecedores { get; set; }
+    public Fornecedor? FornecedorMaisCompetitivo { get; set; }
 
-    public ListaCompras()
+    private static readonly string[] _mercadosPrioritarios = new[] { "Carrefour", "Clube Extra", "Pão de Açúcar" };
+
+    public ListaCompras(ListaComprasRequest listaComprasRequest)
     {
-        Produtos = new Dictionary<string, IEnumerable<Anuncio>>();
+        ParametrosBusca = listaComprasRequest;
+        Produtos = new Dictionary<string, List<Anuncio>>();
+        Fornecedores = Array.Empty<Fornecedor>();
     }
 
 
-    // TODO: tirar média dos valores e excluir grandes disparidades
-    public void AdicionarProduto(string nomeProduto)
+    public void AdicionarProduto(string nomeProduto, List<Anuncio> anuncios)
     {
         var produtoExistente = Produtos.ContainsKey(nomeProduto);
         if (produtoExistente)
         {
-            throw new DomainException("Produto já existente na lista de compras");
+            Log.Warning("Produto {nome} já existente na lista de compras", nomeProduto);
+            return;
         }
 
-        Produtos.Add(nomeProduto, Array.Empty<Anuncio>());
+        Produtos.Add(nomeProduto, anuncios);
     }
 
 
-    public void AdicionarAnuncio(string nomeProduto, Anuncio novoAnuncio)
+    // TODO: tirar média dos valores e excluir grandes disparidades
+    public void OrganizarProdutosPorFornecedor()
     {
-        var produtoNaLista = Produtos.TryGetValue(nomeProduto, out var anunciosExistentes);
-        if (produtoNaLista is false)
+        foreach (var produto in Produtos)
         {
-            throw new DomainException("Impossível adicionar anúncio. Produto não existente na lista de compras");
+            var anuncios = produto.Value?.DistinctBy(d => d.NomeFornecedor)?.ToList();
+            if (anuncios?.Count is 0)
+            {
+                return;
+            }
+
+            var top3Anuncios = new List<Anuncio>();
+            for (var i = 0; i < 3; i++)
+            {
+                var melhorAnuncio = anuncios!.FirstOrDefault(a => _mercadosPrioritarios.Contains(a.NomeFornecedor, StringComparer.InvariantCultureIgnoreCase))
+                                 ?? anuncios!.MinBy(d => d.Preco);
+
+                if (melhorAnuncio is null) continue;
+
+                top3Anuncios.Add(melhorAnuncio);
+                anuncios!.Remove(melhorAnuncio);
+            }
+
+            foreach (var anuncio in top3Anuncios)
+            {
+                var produtoRequest = ParametrosBusca.Produtos.First(p => p.Nome == produto.Key);
+                if (produtoRequest is null) continue;
+
+                var produtoResponse = new Produto(anuncio.Titulo, produtoRequest.Quantidade, anuncio.Preco);
+
+                var fornecedorExistente = Fornecedores.FirstOrDefault(f => f.Nome == anuncio.NomeFornecedor);
+                if (fornecedorExistente is not null)
+                {
+                    fornecedorExistente.AdicionarProduto(produtoResponse);
+                    continue;
+                }
+
+                var newFornecedor = new Fornecedor(anuncio.NomeFornecedor);
+                newFornecedor.AdicionarProduto(produtoResponse);
+                Fornecedores = Fornecedores.Concat(new Fornecedor[] { newFornecedor });
+            }
         }
-
-        Produtos[nomeProduto] = anunciosExistentes!.ToList().Prepend(novoAnuncio);
-
-        RemoverAnuncioMenosCompetitivoFornecedor(nomeProduto, anunciosExistentes!, novoAnuncio);
     }
 
 
-    private void RemoverAnuncioMenosCompetitivoFornecedor(string nomeProduto, IEnumerable<Anuncio> anunciosExistentes, Anuncio novoAnuncio)
+    public void EncontrarFornecedorMaisCompetitivo()
     {
-        var anuncioFornecedorExistente = anunciosExistentes!.FirstOrDefault(a => a.NomeFornecedor == novoAnuncio.NomeFornecedor);
-        if (anuncioFornecedorExistente is not null && novoAnuncio.Preco < anuncioFornecedorExistente.Preco)
-        {
-            Produtos[nomeProduto] = anunciosExistentes!.ToList().Where(a => a != anuncioFornecedorExistente);
-        }
+        var fornecedoresCompletos = Fornecedores.ToList()
+                                                .FindAll(f => f.Produtos.Count() == ParametrosBusca.Produtos.Count());
+
+        FornecedorMaisCompetitivo = fornecedoresCompletos.Any()
+                                  ? fornecedoresCompletos.MinBy(f => f.PrecoTotal)!
+                                  : Fornecedores.MinBy(f => f.PrecoTotal)!;
+
+        Fornecedores = Fornecedores.Where(f => f != FornecedorMaisCompetitivo);
     }
+
 }

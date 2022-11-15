@@ -17,8 +17,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{AE00F0CB-656
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ListaDeComprasInteligente.Scraper", "ListaDeComprasInteligente.Scraper\ListaDeComprasInteligente.Scraper.csproj", "{0080DE5C-98DE-4EB2-913E-43D9AA35FC58}"
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{C61D7CFC-A997-4A62-8D2E-9935A3EF64AB}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{1E064F6F-CBB1-43CC-99EE-77E9608C5A5E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ListaDeComprasInteligente.WebApp", "ListaDeComprasInteligente.WebApp\ListaDeComprasInteligente.WebApp.csproj", "{659E367F-FF33-4491-8C3B-B695F1BB4036}"
@@ -51,10 +49,6 @@ Global
 		{0080DE5C-98DE-4EB2-913E-43D9AA35FC58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0080DE5C-98DE-4EB2-913E-43D9AA35FC58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0080DE5C-98DE-4EB2-913E-43D9AA35FC58}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C61D7CFC-A997-4A62-8D2E-9935A3EF64AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C61D7CFC-A997-4A62-8D2E-9935A3EF64AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C61D7CFC-A997-4A62-8D2E-9935A3EF64AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C61D7CFC-A997-4A62-8D2E-9935A3EF64AB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{659E367F-FF33-4491-8C3B-B695F1BB4036}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{659E367F-FF33-4491-8C3B-B695F1BB4036}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{659E367F-FF33-4491-8C3B-B695F1BB4036}.Release|Any CPU.ActiveCfg = Release|Any CPU

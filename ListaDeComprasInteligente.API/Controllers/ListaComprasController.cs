@@ -1,4 +1,6 @@
-using ListaDeComprasInteligente.Service;
+using ListaDeComprasInteligente.Domain.Exceptions;
+using ListaDeComprasInteligente.Service.Interfaces;
+using ListaDeComprasInteligente.Shared.Extensions;
 using ListaDeComprasInteligente.Shared.Models.Request;
 using ListaDeComprasInteligente.Shared.Models.Response;
 using Microsoft.AspNetCore.Mvc;
@@ -9,34 +11,42 @@ namespace ListaDeComprasInteligente.API.Controllers;
 [Route("[controller]")]
 public class ListaComprasController : ControllerBase
 {
-    private readonly ILogger<ListaComprasController> _logger;
-    private readonly ListaComprasBuilderService _listaComprasBuilderService;
+    private readonly IListaComprasBuilderService _listaComprasBuilderService;
 
-    public ListaComprasController(ILogger<ListaComprasController> logger, ListaComprasBuilderService listaComprasBuilderService)
-    {
-        _logger = logger;
+    public ListaComprasController(IListaComprasBuilderService listaComprasBuilderService) =>
         _listaComprasBuilderService = listaComprasBuilderService;
-    }
     
 
     [HttpPost]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(IEnumerable<ListaComprasResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Post([FromBody] ListaComprasRequest request)
     {
         try
         {
-            var result = await _listaComprasBuilderService.MontarListaComprasAsync(request);
+            var result = await _listaComprasBuilderService.MontarListaComprasAsync(request)
+                                                          .LogOnError("Erro ao montar lista de compras");
             return Ok(result);
+        }
+        catch (DomainException ex)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Ops, houve um problema com a requisição",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError("Erro ao montar lista de compras: {Ex}", ex);
-            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
-            {
-                Title = "Erro ao montar lista de compras",
-                Detail = ex.Message,
-                Extensions = { {"InnerException", ex.InnerException?.Message} }
-            });
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new ProblemDetails
+                {
+                    Title = "Erro ao montar lista de compras",
+                    Detail = ex.Message,
+                    Extensions = { {"InnerException", ex.InnerException?.Message} },
+                    Status = StatusCodes.Status500InternalServerError
+                });
         }
     }
 }
