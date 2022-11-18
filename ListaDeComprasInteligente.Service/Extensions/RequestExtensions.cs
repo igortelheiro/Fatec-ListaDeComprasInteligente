@@ -13,7 +13,7 @@ public static class RequestExtensions
 
     private static Uri BuildUri(this ProdutoRequest produtoRequest)
     {
-        const string baseUrl = "https://www.google.com/search?tbm=shop&q=";
+        const string baseUrl = "https://www.google.com/search?gl=br&tbm=shop&q=";
         var encodedProductSearch = produtoRequest.ToString().EncodeToGoogleQuery();
 
         var stringBuilder = new StringBuilder(baseUrl)

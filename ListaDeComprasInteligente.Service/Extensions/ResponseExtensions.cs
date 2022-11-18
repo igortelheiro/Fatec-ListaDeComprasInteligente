@@ -10,8 +10,8 @@ public static class ResponseExtensions
     public static ListaComprasResponse ToResponse(this ListaCompras listaCompras, ListaComprasRequest request)
     {
         var fornecedoresResponse = listaCompras.Fornecedores.Select(f => f.ToResponse());
-        var fornecedorMaisCompetitivo = listaCompras.FornecedorMaisCompetitivo!.ToResponse();
-        return new ListaComprasResponse(request, fornecedoresResponse, fornecedorMaisCompetitivo!);
+        var fornecedorMaisCompetitivo = listaCompras.FornecedorMaisCompetitivo?.ToResponse();
+        return new ListaComprasResponse(request, fornecedoresResponse, fornecedorMaisCompetitivo);
     }
 
 

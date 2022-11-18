@@ -1,5 +1,6 @@
 using ListaDeComprasInteligente.Domain.Exceptions;
 using ListaDeComprasInteligente.Service.Interfaces;
+using ListaDeComprasInteligente.Shared.Exceptions;
 using ListaDeComprasInteligente.Shared.Extensions;
 using ListaDeComprasInteligente.Shared.Models.Request;
 using ListaDeComprasInteligente.Shared.Models.Response;
@@ -13,8 +14,12 @@ public class ListaComprasController : ControllerBase
 {
     private readonly IListaComprasBuilderService _listaComprasBuilderService;
 
-    public ListaComprasController(IListaComprasBuilderService listaComprasBuilderService) =>
+    public ListaComprasController(IListaComprasBuilderService listaComprasBuilderService)
+    {
+        ArgumentNullException.ThrowIfNull(listaComprasBuilderService);
+
         _listaComprasBuilderService = listaComprasBuilderService;
+    }
     
 
     [HttpPost]
@@ -37,13 +42,24 @@ public class ListaComprasController : ControllerBase
                 Status = StatusCodes.Status400BadRequest
             });
         }
-        catch (Exception ex)
+        catch (ServiceException ex)
         {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new ProblemDetails
                 {
                     Title = "Erro ao montar lista de compras",
                     Detail = ex.Message,
+                    Extensions = { { "InnerException", ex.InnerException?.Message } },
+                    Status = StatusCodes.Status500InternalServerError
+                });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new ProblemDetails
+                {
+                    Title = "Erro ao montar lista de compras",
+                    Detail = ex.ToString(),
                     Extensions = { {"InnerException", ex.InnerException?.Message} },
                     Status = StatusCodes.Status500InternalServerError
                 });

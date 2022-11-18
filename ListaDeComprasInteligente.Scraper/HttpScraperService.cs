@@ -1,6 +1,7 @@
 ﻿using ListaDeComprasInteligente.Scraper.Constants;
 using ListaDeComprasInteligente.Scraper.Interfaces;
 using ListaDeComprasInteligente.Scraper.Models;
+using ListaDeComprasInteligente.Shared.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace ListaDeComprasInteligente.Scraper;
@@ -9,12 +10,21 @@ public class HttpScraperService : IScraperService
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public HttpScraperService(IHttpClientFactory httpClientFactory) =>
+    public HttpScraperService(IHttpClientFactory httpClientFactory)
+    {
+        ArgumentNullException.ThrowIfNull(httpClientFactory);
+
         _httpClientFactory = httpClientFactory;
+    }
 
     public async Task<ScrapResult> ScrapAsync(ScrapRequest scrapRequest)
     {
         var html = await GetPageContentAsync(scrapRequest.Uri);
+        if (string.IsNullOrEmpty(html))
+        {
+            throw new ServiceException("O scrap não retornou um arquivo html");
+        }
+
         var scrapResult = ParseHtml(html);
         return scrapResult;
     }
@@ -49,10 +59,16 @@ public class HttpScraperService : IScraperService
             fornecedores.Add(fornecedor);
         }
 
+        var anyValueFound = titulos.Count > 0 || precos.Count > 0 || fornecedores.Count > 0;
+        if (!anyValueFound)
+        {
+            throw new ServiceException("Nenhum valor foi extraído do html");
+        }
+
         var isParseValid = titulos.Count == precos.Count && titulos.Count == fornecedores.Count;
         if (!isParseValid)
         {
-            throw new Exception("Erro ao analisar html");
+            throw new ServiceException("Quantidade inválida de valores extraídos do html");
         }
 
         return new ScrapResult(titulos.ToArray(), precos.ToArray(), fornecedores.ToArray());

@@ -4,9 +4,11 @@ using ListaDeComprasInteligente.Scraper.Interfaces;
 using ListaDeComprasInteligente.Scraper.Models;
 using ListaDeComprasInteligente.Service.Extensions;
 using ListaDeComprasInteligente.Service.Interfaces;
+using ListaDeComprasInteligente.Shared.Exceptions;
 using ListaDeComprasInteligente.Shared.Models.Request;
 using ListaDeComprasInteligente.Shared.Models.Response;
 using Microsoft.AspNetCore.Http;
+using Serilog;
 using System.Globalization;
 
 namespace ListaDeComprasInteligente.Service;
@@ -18,6 +20,9 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
 
     public ListaComprasBuilderService(IScraperService scraperService, IHttpContextAccessor httpContextAccessor)
     {
+        ArgumentNullException.ThrowIfNull(scraperService);
+        ArgumentNullException.ThrowIfNull(httpContextAccessor);
+
         _scraperService = scraperService;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -31,6 +36,10 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
         {
             var scrapResult = await ScrapProductAsync(request);
             var anuncios = ExtrairAnuncios(request, scrapResult);
+            if (anuncios.Count is 0)
+            {
+                throw new ServiceException($"Nenhum anúncio foi extraído do resultado do scrap para \"{request.Nome}\"");
+            }
 
             listaDeCompras.AdicionarProduto(request.Nome, anuncios);
         });
@@ -58,11 +67,19 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
             var precoAnuncio = scrapResult.Precos[i].Replace(',', '.');
             var fornecedor = scrapResult.Fornecedores[i];
 
-            var anuncioValido = ValidarAnuncioProduto(tituloAnuncio, produtoRequest);
-            if (!anuncioValido) continue;
+            var anuncioValido = ValidarTituloAnuncio(tituloAnuncio, produtoRequest);
+            if (!anuncioValido)
+            {
+                Log.Warning("Título do anúncio inválido para {nomeProduto}", produtoRequest.Nome);
+                continue;
+            }
 
-            var precoValido = decimal.TryParse(precoAnuncio, NumberStyles.Currency, CultureInfo.InvariantCulture, out var preco);
-            if (!precoValido) continue;
+            var precoValido = ValidarPrecoAnuncio(precoAnuncio, out var preco);
+            if (!precoValido)
+            {
+                Log.Warning("Preço do anúncio inválido para {nomeProduto}", produtoRequest.Nome);
+                continue;
+            }
 
             var anuncio = new Anuncio(tituloAnuncio, fornecedor, preco);
             anuncios.Add(anuncio);
@@ -72,11 +89,15 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
     }
 
 
-    private static bool ValidarAnuncioProduto(string anuncioProduto, ProdutoRequest produtoRequest)
+    private static bool ValidarTituloAnuncio(string anuncioProduto, ProdutoRequest produtoRequest)
     {
         var palavrasChave = produtoRequest.ToString().Split(' ');
         var anuncioValido = palavrasChave.All(palavra => anuncioProduto.Contains(palavra, StringComparison.InvariantCultureIgnoreCase));
 
         return anuncioValido;
     }
+
+
+    private static bool ValidarPrecoAnuncio(string precoAnuncio, out decimal preco) =>
+        decimal.TryParse(precoAnuncio, NumberStyles.Currency, CultureInfo.InvariantCulture, out preco);
 }

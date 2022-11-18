@@ -1,6 +1,5 @@
 ﻿using ListaDeComprasInteligente.Domain.ValueObjects;
 using ListaDeComprasInteligente.Shared.Models.Request;
-using ListaDeComprasInteligente.Shared.Models.Response;
 using Serilog;
 
 namespace ListaDeComprasInteligente.Domain;
@@ -9,7 +8,7 @@ public class ListaCompras
 {
     public ListaComprasRequest ParametrosBusca { get; }
     public IDictionary<string, List<Anuncio>> Produtos { get; }
-    public IEnumerable<Fornecedor> Fornecedores { get; set; }
+    public List<Fornecedor> Fornecedores { get; set; }
     public Fornecedor? FornecedorMaisCompetitivo { get; set; }
 
     private static readonly string[] _mercadosPrioritarios = new[] { "Carrefour", "Clube Extra", "Pão de Açúcar" };
@@ -18,7 +17,7 @@ public class ListaCompras
     {
         ParametrosBusca = listaComprasRequest;
         Produtos = new Dictionary<string, List<Anuncio>>();
-        Fornecedores = Array.Empty<Fornecedor>();
+        Fornecedores = new();
     }
 
 
@@ -74,7 +73,7 @@ public class ListaCompras
 
                 var newFornecedor = new Fornecedor(anuncio.NomeFornecedor);
                 newFornecedor.AdicionarProduto(produtoResponse);
-                Fornecedores = Fornecedores.Concat(new Fornecedor[] { newFornecedor });
+                Fornecedores.Add(newFornecedor);
             }
         }
     }
@@ -82,14 +81,13 @@ public class ListaCompras
 
     public void EncontrarFornecedorMaisCompetitivo()
     {
-        var fornecedoresCompletos = Fornecedores.ToList()
-                                                .FindAll(f => f.Produtos.Count() == ParametrosBusca.Produtos.Count());
+        var fornecedoresCompletos = Fornecedores.FindAll(f => f.Produtos.Count() == ParametrosBusca.Produtos.Count());
 
         FornecedorMaisCompetitivo = fornecedoresCompletos.Any()
                                   ? fornecedoresCompletos.MinBy(f => f.PrecoTotal)!
                                   : Fornecedores.MinBy(f => f.PrecoTotal)!;
 
-        Fornecedores = Fornecedores.Where(f => f != FornecedorMaisCompetitivo);
+        Fornecedores.Remove(FornecedorMaisCompetitivo);
     }
 
 }

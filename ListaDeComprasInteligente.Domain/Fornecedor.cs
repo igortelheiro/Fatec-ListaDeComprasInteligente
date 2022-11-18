@@ -5,7 +5,7 @@ namespace ListaDeComprasInteligente.Domain;
 public class Fornecedor
 {
     public string Nome { get; set; }
-    public IEnumerable<Produto> Produtos { get; set; }
+    public List<Produto> Produtos { get; set; }
     public decimal PrecoTotal { get; set; }
 
     public Fornecedor(string nome)
@@ -13,14 +13,14 @@ public class Fornecedor
         ArgumentNullException.ThrowIfNull(nome);
 
         Nome = nome;
-        Produtos = Array.Empty<Produto>();
+        Produtos = new();
         PrecoTotal = 0m;
     }
 
 
     public void AdicionarProduto(Produto produto)
     {
-        Produtos = Produtos.Concat(new Produto[] { produto });
+        Produtos.Add(produto);
         PrecoTotal = CalcTotalPrice();
     }
 
