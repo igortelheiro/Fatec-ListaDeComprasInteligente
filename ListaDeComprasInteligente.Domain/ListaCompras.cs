@@ -62,17 +62,17 @@ public class ListaCompras
                 var produtoRequest = ParametrosBusca.Produtos.First(p => p.Nome == produto.Key);
                 if (produtoRequest is null) continue;
 
-                var produtoResponse = new Produto(anuncio.Titulo, produtoRequest.Quantidade, anuncio.Preco);
+                var produtoFornecedor = new Produto(anuncio.Titulo, produtoRequest.Quantidade, anuncio.Preco);
 
                 var fornecedorExistente = Fornecedores.FirstOrDefault(f => f.Nome == anuncio.NomeFornecedor);
                 if (fornecedorExistente is not null)
                 {
-                    fornecedorExistente.AdicionarProduto(produtoResponse);
+                    fornecedorExistente.AdicionarProduto(produtoFornecedor);
                     continue;
                 }
 
                 var newFornecedor = new Fornecedor(anuncio.NomeFornecedor);
-                newFornecedor.AdicionarProduto(produtoResponse);
+                newFornecedor.AdicionarProduto(produtoFornecedor);
                 Fornecedores.Add(newFornecedor);
             }
         }
