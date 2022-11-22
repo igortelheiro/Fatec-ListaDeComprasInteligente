@@ -21,15 +21,15 @@ public class Fornecedor
     public void AdicionarProduto(Produto produto)
     {
         Produtos.Add(produto);
-        PrecoTotal = CalcTotalPrice();
+        CalcTotalPrice();
     }
 
 
     private decimal CalcTotalPrice() =>
-        Produtos.Aggregate(0m,
-            (total, produto) =>
-            {
-                total += produto.PrecoUnitario * produto.Quantidade;
-                return total;
-            });
+        PrecoTotal = Produtos.Aggregate(0m,
+                                       (total, produto) =>
+                                       {
+                                           total += produto.PrecoUnitario * produto.Quantidade;
+                                           return total;
+                                       });
 }

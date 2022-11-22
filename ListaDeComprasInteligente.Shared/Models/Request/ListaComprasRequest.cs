@@ -3,9 +3,9 @@
 namespace ListaDeComprasInteligente.Shared.Models.Request;
 
 // TODO: Adicionar busca por categoria
-public class ListaComprasRequest
+public record ListaComprasRequest
 {
     [Required]
     [MinLength(1)]
-    public IEnumerable<ProdutoRequest> Produtos { get; set; }
+    public IEnumerable<ProdutoRequest> Produtos { get; init; }
 }

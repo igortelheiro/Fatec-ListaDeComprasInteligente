@@ -26,7 +26,7 @@ public class ListaCompras
         var produtoExistente = Produtos.ContainsKey(nomeProduto);
         if (produtoExistente)
         {
-            Log.Warning("Produto {nome} já existente na lista de compras", nomeProduto);
+            Log.Warning("Produto {nomeProduto} já existente na lista de compras", nomeProduto);
             return;
         }
 
@@ -34,60 +34,78 @@ public class ListaCompras
     }
 
 
-    // TODO: tirar média dos valores e excluir grandes disparidades
     public void OrganizarProdutosPorFornecedor()
     {
         foreach (var produto in Produtos)
         {
-            var anuncios = produto.Value?.DistinctBy(d => d.NomeFornecedor)?.ToList();
-            if (anuncios?.Count is 0)
-            {
-                return;
-            }
+            var anuncios = produto.Value;
+            if (anuncios is null) continue;
 
-            var top3Anuncios = new List<Anuncio>();
-            for (var i = 0; i < 3; i++)
-            {
-                var melhorAnuncio = anuncios!.FirstOrDefault(a => _mercadosPrioritarios.Contains(a.NomeFornecedor, StringComparer.InvariantCultureIgnoreCase))
-                                 ?? anuncios!.MinBy(d => d.Preco);
+            OrganizarAnunciosPorFornecedor(ref anuncios);
+            AdicionarProdutoAoFornecedor(produto.Key, ref anuncios);
 
-                if (melhorAnuncio is null) continue;
+        }
 
-                top3Anuncios.Add(melhorAnuncio);
-                anuncios!.Remove(melhorAnuncio);
-            }
+        FiltrarFornecedoresCompletos();
+        FiltrarTop3Fornecedores();
+    }
 
-            foreach (var anuncio in top3Anuncios)
-            {
-                var produtoRequest = ParametrosBusca.Produtos.First(p => p.Nome == produto.Key);
-                if (produtoRequest is null) continue;
 
-                var produtoFornecedor = new Produto(anuncio.Titulo, produtoRequest.Quantidade, anuncio.Preco);
+    #region Private
+    public void EncontrarFornecedorMaisCompetitivo()
+    {
+        if (Fornecedores.Count is 0) return;
 
-                var fornecedorExistente = Fornecedores.FirstOrDefault(f => f.Nome == anuncio.NomeFornecedor);
-                if (fornecedorExistente is not null)
-                {
-                    fornecedorExistente.AdicionarProduto(produtoFornecedor);
-                    continue;
-                }
+        FornecedorMaisCompetitivo = Fornecedores.MinBy(_=>_.PrecoTotal)!;
+        Fornecedores.Remove(FornecedorMaisCompetitivo);
+    }
 
-                var newFornecedor = new Fornecedor(anuncio.NomeFornecedor);
-                newFornecedor.AdicionarProduto(produtoFornecedor);
-                Fornecedores.Add(newFornecedor);
-            }
+
+    private void OrganizarAnunciosPorFornecedor(ref List<Anuncio> anuncios)
+    {
+        anuncios = anuncios.DistinctBy(_=>_.NomeFornecedor).ToList();
+        if (anuncios.Count is 0)
+        {
+            Fornecedores.Add(new("Não encontrado"));
+            return;
         }
     }
 
 
-    public void EncontrarFornecedorMaisCompetitivo()
+    private void AdicionarProdutoAoFornecedor(string nomeProduto, ref List<Anuncio> anuncios)
     {
-        var fornecedoresCompletos = Fornecedores.FindAll(f => f.Produtos.Count() == ParametrosBusca.Produtos.Count());
+        foreach (var anuncio in anuncios)
+        {
+            var request = ParametrosBusca.Produtos.FirstOrDefault(_=>_.Nome == nomeProduto);
+            if (request is null) continue;
 
-        FornecedorMaisCompetitivo = fornecedoresCompletos.Any()
-                                  ? fornecedoresCompletos.MinBy(f => f.PrecoTotal)!
-                                  : Fornecedores.MinBy(f => f.PrecoTotal)!;
+            var newProduto = new Produto(anuncio.Titulo, request.Quantidade, anuncio.Preco);
 
-        Fornecedores.Remove(FornecedorMaisCompetitivo);
+            var fornecedorExistente = Fornecedores.FirstOrDefault(_=>_.Nome == anuncio.NomeFornecedor);
+            if (fornecedorExistente is not null)
+            {
+                fornecedorExistente.AdicionarProduto(newProduto);
+                continue;
+            }
+
+            var newFornecedor = new Fornecedor(anuncio.NomeFornecedor);
+            newFornecedor.AdicionarProduto(newProduto);
+            Fornecedores.Add(newFornecedor);
+        }
     }
 
+
+    private void FiltrarFornecedoresCompletos()
+    {
+        var fornecedoresCompletos = Fornecedores
+            .FindAll(_ => _.Produtos.Count == ParametrosBusca.Produtos.Count())
+            .Select(_ => _.Nome);
+
+        Fornecedores = Fornecedores.Where(_ => fornecedoresCompletos.Contains(_.Nome)).ToList();
+    }
+
+
+    private void FiltrarTop3Fornecedores() =>
+        Fornecedores = Fornecedores.OrderBy(_=>_.PrecoTotal).Take(3).ToList();
+    #endregion
 }

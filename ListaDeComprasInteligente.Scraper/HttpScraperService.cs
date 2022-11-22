@@ -13,80 +13,97 @@ public class HttpScraperService : IScraperService
     public HttpScraperService(IHttpClientFactory httpClientFactory)
     {
         ArgumentNullException.ThrowIfNull(httpClientFactory);
-
         _httpClientFactory = httpClientFactory;
     }
 
+
     public async Task<ScrapResult> ScrapAsync(ScrapRequest scrapRequest)
     {
-        var html = await GetPageContentAsync(scrapRequest.Uri);
-        if (string.IsNullOrEmpty(html))
-        {
-            throw new ServiceException("O scrap não retornou um arquivo html");
-        }
+        var scrapResult = new ScrapResult();
 
-        var scrapResult = ParseHtml(html);
+        await Parallel.ForEachAsync(scrapRequest.Uris, async (uri, token) =>
+        {
+            var html = await GetPageContentAsync(uri);
+            ValidarScrap(html);
+
+            var scrap = BuildScrapResult(html);
+            scrapResult.AddScrap(scrap);
+        });
+
+
         return scrapResult;
     }
 
 
-    private async Task<string> GetPageContentAsync(Uri uri)
+    // TODO: Test
+    public static ScrapResult BuildScrapResult(string html)
     {
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35");
-        
-        var searchResult = await httpClient.GetAsync(uri);
-        return await searchResult.Content.ReadAsStringAsync();
-    }
+        var anuncios = ExtrairAnuncios(html, GoogleShoppingRegexPatterns.Anuncio);
 
-
-    public static ScrapResult ParseHtml(string html)
-    {
-        var anuncios = ExtractAnuncios(html, GoogleShoppingRegexPatterns.Product);
-
-        List<string> titulos = new();
-        List<string> precos = new();
-        List<string> fornecedores = new();
+        var titulos = new List<string>();
+        var precos = new List<string>();
+        var fornecedores = new List<string>();
 
         foreach(var anuncio in anuncios)
         {
-            var titulo = ExtractValue(anuncio, GoogleShoppingRegexPatterns.ProductTitle);
-            var preco = ExtractValue(anuncio, GoogleShoppingRegexPatterns.ProductPrice);
-            var fornecedor = ExtractValue(anuncio, GoogleShoppingRegexPatterns.ProductSuplier);
+            var titulo = ExtrairValor(GoogleShoppingRegexPatterns.TituloAnuncio, anuncio);
+            var preco = ExtrairValor(GoogleShoppingRegexPatterns.Preco, anuncio);
+            var fornecedor = ExtrairValor(GoogleShoppingRegexPatterns.Fornecedor, anuncio);
             
             titulos.Add(titulo);
             precos.Add(preco);
             fornecedores.Add(fornecedor);
         }
 
-        var anyValueFound = titulos.Count > 0 || precos.Count > 0 || fornecedores.Count > 0;
-        if (!anyValueFound)
-        {
-            throw new ServiceException("Nenhum valor foi extraído do html");
-        }
+        ValidarExtracao(titulos, precos, fornecedores);
 
-        var isParseValid = titulos.Count == precos.Count && titulos.Count == fornecedores.Count;
-        if (!isParseValid)
-        {
-            throw new ServiceException("Quantidade inválida de valores extraídos do html");
-        }
-
-        return new ScrapResult(titulos.ToArray(), precos.ToArray(), fornecedores.ToArray());
+        return new ScrapResult(titulos, precos, fornecedores);
     }
 
 
-    private static string[] ExtractAnuncios(string html, string regexPattern) =>
+    #region Private
+    private async Task<string> GetPageContentAsync(Uri uri)
+    {
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35");
+
+        var searchResult = await httpClient.GetAsync(uri);
+        return await searchResult.Content.ReadAsStringAsync();
+    }
+    
+    
+    private static void ValidarScrap(string html)
+    {
+        if (string.IsNullOrEmpty(html))
+            throw new ServiceException("O scrap não retornou um arquivo html");
+    }
+
+
+    private static string[] ExtrairAnuncios(string html, string regexPattern) =>
         new Regex(regexPattern)
             .Matches(html)
-            .Select(m => m.Groups.Values.ToArray()[1])
-            .Select(g => g.Value)
+            .Select(match => match.Groups.Values.ToArray()[1])
+            .Select(group => group.Value)
             .ToArray();
 
 
-    private static string ExtractValue(string anuncio, string regexPattern) =>
+    private static string ExtrairValor(string regexPattern, string anuncio) =>
         new Regex(regexPattern)
             .Matches(anuncio)
-            .Select(m => m.Groups.Values.ToArray()[1])
-            .Select(g => g.Value.Replace("R$", string.Empty).TrimStart())
+            .Select(match => match.Groups.Values.ToArray()[1])
+            .Select(group => group.Value.Replace("R$", string.Empty).TrimStart())
             .FirstOrDefault(string.Empty);
+
+
+    private static void ValidarExtracao(List<string> titulos, List<string> precos, List<string> fornecedores)
+    {
+        var anyValueFound = titulos.Count > 0 || precos.Count > 0 || fornecedores.Count > 0;
+        if (anyValueFound is not true)
+            throw new ServiceException("Nenhum valor foi extraído do html");
+
+        var isParseValid = titulos.Count == precos.Count && titulos.Count == fornecedores.Count;
+        if (isParseValid is not true)
+            throw new ServiceException("Quantidade inválida de valores extraídos do html");
+    }
+    #endregion
 }

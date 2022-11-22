@@ -8,21 +8,46 @@ namespace ListaDeComprasInteligente.Service.Extensions;
 public static class RequestExtensions
 {
     public static ScrapRequest ToScrapRequest(this ProdutoRequest produtoRequest, Geolocation? geolocation) =>
-        new (produtoRequest.BuildUri(), geolocation);
+        new(produtoRequest.GetUrisToScrap(), geolocation);
 
 
-    private static Uri BuildUri(this ProdutoRequest produtoRequest)
+    private static List<Uri> GetUrisToScrap(this ProdutoRequest produtoRequest)
     {
         const string baseUrl = "https://www.google.com/search?gl=br&tbm=shop&q=";
-        var encodedProductSearch = produtoRequest.ToString().EncodeToGoogleQuery();
+        var query = GetEncodedQuery(produtoRequest);
 
-        var stringBuilder = new StringBuilder(baseUrl)
-            .Append(encodedProductSearch);
+        var stringBuilder = new StringBuilder(baseUrl).Append(query);
 
-        return new Uri(stringBuilder.ToString());
+        return BuildPagesUris(ref stringBuilder);
     }
 
 
-    private static string EncodeToGoogleQuery(this string query) =>
-        UrlEncoder.Default.Encode(query).Replace("%20", "+");
+    private static string GetEncodedQuery(ProdutoRequest produtoRequest)
+    {
+        var query = produtoRequest.ToString();
+        var encodedQuery = UrlEncoder.Default.Encode(query).Replace("%20", "+");
+
+        return encodedQuery;
+    }
+
+
+    private static List<Uri> BuildPagesUris(ref StringBuilder sb)
+    {
+        const string paginationQuery = "?start=";
+        const int productsPerPage = 60;
+        var paginator = 0;
+        
+        var uris = new List<Uri>();
+
+        foreach (var _ in Enumerable.Range(0, 3))
+        {
+            sb.Append(paginationQuery + productsPerPage.ToString());
+            paginator += productsPerPage;
+
+            var newUri = new Uri(sb.ToString());
+            uris.Add(newUri);
+        }
+
+        return uris;
+    }
 }

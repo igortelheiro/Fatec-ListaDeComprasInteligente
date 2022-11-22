@@ -4,7 +4,6 @@ using ListaDeComprasInteligente.Scraper.Interfaces;
 using ListaDeComprasInteligente.Scraper.Models;
 using ListaDeComprasInteligente.Service.Extensions;
 using ListaDeComprasInteligente.Service.Interfaces;
-using ListaDeComprasInteligente.Shared.Exceptions;
 using ListaDeComprasInteligente.Shared.Models.Request;
 using ListaDeComprasInteligente.Shared.Models.Response;
 using Microsoft.AspNetCore.Http;
@@ -35,10 +34,11 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
         await Parallel.ForEachAsync(listaComprasRequest.Produtos, async (request, token) =>
         {
             var scrapResult = await ScrapProductAsync(request);
+
             var anuncios = ExtrairAnuncios(request, scrapResult);
             if (anuncios.Count is 0)
             {
-                throw new ServiceException($"Nenhum anúncio foi extraído do resultado do scrap para \"{request.Nome}\"");
+                Log.Warning($"Nenhum anúncio foi extraído do resultado do scrap para \"{request.Nome}\"");
             }
 
             listaDeCompras.AdicionarProduto(request.Nome, anuncios);
@@ -46,6 +46,7 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
 
         listaDeCompras.OrganizarProdutosPorFornecedor();
         listaDeCompras.EncontrarFornecedorMaisCompetitivo();
+
         return listaDeCompras.ToResponse(listaComprasRequest);
     }
 
@@ -61,7 +62,7 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
     {
         var anuncios = new List<Anuncio>();
 
-        for (var i = 0; i < scrapResult.Titulos.Length; i++)
+        foreach(var i in Enumerable.Range(0, scrapResult.Titulos.Count))
         {
             var tituloAnuncio = scrapResult.Titulos[i];
             var precoAnuncio = scrapResult.Precos[i].Replace(',', '.');

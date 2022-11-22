@@ -13,9 +13,6 @@ public class ProdutoRequest
     [Range(1, 999)]
     public decimal Quantidade { get; set; }
 
-    [StringLength(100)]
-    public string Descricao { get; set; }
 
-
-    public override string ToString() => $"{Nome} {Descricao}";
+    public override string ToString() => Nome;
 }
