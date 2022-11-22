@@ -11,8 +11,6 @@ public class ListaCompras
     public List<Fornecedor> Fornecedores { get; set; }
     public Fornecedor? FornecedorMaisCompetitivo { get; set; }
 
-    private static readonly string[] _mercadosPrioritarios = new[] { "Carrefour", "Clube Extra", "Pão de Açúcar" };
-
     public ListaCompras(ListaComprasRequest listaComprasRequest)
     {
         ParametrosBusca = listaComprasRequest;
