@@ -1,17 +1,16 @@
 ﻿using ListaDeComprasInteligente.Domain;
 using ListaDeComprasInteligente.Domain.ValueObjects;
-using ListaDeComprasInteligente.Shared.Models.Request;
 using ListaDeComprasInteligente.Shared.Models.Response;
 
 namespace ListaDeComprasInteligente.Service.Extensions;
 
 public static class ResponseExtensions
 {
-    public static ListaComprasResponse ToResponse(this ListaCompras listaCompras, ListaComprasRequest request)
+    public static ListaComprasResponse ToResponse(this ListaCompras listaCompras)
     {
         var fornecedoresResponse = listaCompras.Fornecedores.Select(f => f.ToResponse());
         var fornecedorMaisCompetitivo = listaCompras.FornecedorMaisCompetitivo?.ToResponse();
-        return new ListaComprasResponse(request, fornecedoresResponse, fornecedorMaisCompetitivo);
+        return new ListaComprasResponse(fornecedoresResponse, fornecedorMaisCompetitivo);
     }
 
 

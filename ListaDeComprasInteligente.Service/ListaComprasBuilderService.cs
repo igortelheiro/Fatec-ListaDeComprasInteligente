@@ -47,7 +47,7 @@ public class ListaComprasBuilderService : IListaComprasBuilderService
         listaDeCompras.OrganizarProdutosPorFornecedor();
         listaDeCompras.EncontrarFornecedorMaisCompetitivo();
 
-        return listaDeCompras.ToResponse(listaComprasRequest);
+        return listaDeCompras.ToResponse();
     }
 
 
